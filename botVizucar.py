@@ -147,3 +147,36 @@ def get_car_image_url(driver, car_make, car_model):
     except Exception as e:
         print(f"Erreur lors de la récupération de l'image pour {car_make} {car_model}: {e}")
         return None
+    
+def update_json_cars_data(json_file):
+    """
+    Met à jour le fichier JSON contenant la base de données des voitures avec les URLs des images.
+    
+    Args:
+        json_file (str): Le chemin du fichier JSON contenant les données des voitures.
+    """
+    with open(json_file, "r") as f:
+        cars = json.load(f)
+
+    driver = configure_driver()
+
+    for car in cars:
+        car_name = car['make'] + " " + car['model']
+        print(f"Recherche d'image pour {car_name}...")
+
+        image_url = get_car_image_url(driver, car['make'], car['model'])
+        if image_url:
+            car['urlimage'] = image_url
+            print(f"Image trouvée pour {car_name}")
+        else:
+            print(f"Aucune image trouvée pour {car_name}")
+
+    driver.quit()
+
+    # Sauvegarder les mises à jour dans le fichier JSON
+    with open(json_file, "w") as f:
+        json.dump(cars, f, indent=4)
+    print("Base de données mise à jour.")
+
+if __name__ == "__main__":
+    update_json_cars_data("vehicles-model.json")
