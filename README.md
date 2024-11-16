@@ -1,3 +1,3 @@
 <p style='align:center'>
-  ![image](https://github.com/user-attachments/assets/46f0ee3a-228a-4881-880c-488987562480)
+  <img src='https://github.com/user-attachments/assets/7d6c0f8a-4faa-49d7-bd5e-daed5c1e1189' alt='botLogo'>
 </p>
