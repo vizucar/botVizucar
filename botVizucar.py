@@ -39,88 +39,65 @@ def get_car_image_url(driver, car_make, car_model):
 
     try:
         # Chargement de la page
-        time.sleep(2)
+        time.sleep(0.25)
 
         # Récupération de la barre de recherche Google image
         search_box = driver.find_element(By.ID, "APjFqb")
 
-        if not search_box.is_displayed():
-            print("La barre de recherche n'est pas visible.")
-        else:
-            print("La barre de recherche est visible.")
-
         # Suppression de tous les éléments qui empêche de cliquer sur la barre de recherche
         try:
-            overlays = driver.find_elements(By.CSS_SELECTOR, "ul.dbXO9")
-            for overlay in overlays:
-                driver.execute_script("arguments[0].style.display = 'none';", overlay)
-            print("Overlays supprimés.")
+            overlay = driver.find_element(By.CSS_SELECTOR, "ul.dbXO9")
+            driver.execute_script("arguments[0].style.display = 'none';", overlay)
         except Exception as e:
-            print(f"Aucun overlay à supprimer : {e}")
+            print("Aucun overlay à supprimer")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "yS1nld")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "yS1nld")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquante trouvé : {e}")
+            print("Aucun div bloquante trouvé")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "AG96lb")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "AG96lb")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquante trouvé : {e}")
+            print("Aucun div bloquante trouvé")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "I90TVb")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "I90TVb")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquante trouvé : {e}")
+            print("Aucun div bloquante trouvé")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "IczZ4b")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "IczZ4b")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquante trouvé : {e}")
+            print("Aucun div bloquante trouvé")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "QS5gu")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "QS5gu")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquante trouvé : {e}")
+            print("Aucun div bloquante trouvé")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "GzLjMd")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "GzLjMd")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquante trouvé : {e}")
+            print("Aucun div bloquante trouvé")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "jw8mI")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "jw8mI")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquant trouvé : {e}")
+            print("Aucun div bloquant trouvé")
 
         try:
-            blocking_divs = driver.find_elements(By.CLASS_NAME, "vUd4jb")
-            for div in blocking_divs:
-                driver.execute_script("arguments[0].style.display = 'none';", div)
-            print("Divs bloquantes supprimés.")
+            blocking_div = driver.find_element(By.CLASS_NAME, "vUd4jb")
+            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
         except Exception as e:
-            print(f"Aucun div bloquante trouvé : {e}")
+            print("Aucun div bloquante trouvé")
 
         # Insertion du nom de la voiture dans la barre de recherche
         search_box.click()
@@ -128,12 +105,11 @@ def get_car_image_url(driver, car_make, car_model):
         search_box.send_keys(Keys.RETURN)
 
         # Chargement des images
-        time.sleep(2) 
+        time.sleep(1)
 
         # Récupération de l'url de la première image
         image_elements = driver.find_elements(By.TAG_NAME, 'img')
         for img in image_elements:
-
             alt_text = img.get_attribute('alt')
             if alt_text and car_make.lower() in alt_text.lower():
                 image_url = img.get_attribute('src')
@@ -141,8 +117,6 @@ def get_car_image_url(driver, car_make, car_model):
                     return image_url
                 else:
                     print("URL d'image non disponible.")
-
-        print(f"Aucune image trouvée correspondant au nom de la voiture {car_make} {car_model}.")
         return None
     except Exception as e:
         print(f"Erreur lors de la récupération de l'image pour {car_make} {car_model}: {e}")
@@ -160,6 +134,9 @@ def update_json_cars_data(json_file):
 
     driver = configure_driver()
 
+    size_cars = len(cars)
+    i = 0
+    j = 0
     for car in cars:
         car_name = car['make'] + " " + car['model']
         print(f"Recherche d'image pour {car_name}...")
@@ -167,9 +144,11 @@ def update_json_cars_data(json_file):
         image_url = get_car_image_url(driver, car['make'], car['model'])
         if image_url:
             car['urlimage'] = image_url
-            print(f"Image trouvée pour {car_name}")
+            i+=1
+            print(f"Image trouvée pour {car_name} - {i}/{size_cars}\n")
         else:
-            print(f"Aucune image trouvée pour {car_name}")
+            j+=1
+            print(f"Aucune image trouvée pour {car_name} - {j}/{size_cars} image perdu\n")
 
     driver.quit()
 
