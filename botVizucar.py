@@ -139,17 +139,23 @@ def update_json_cars_data(json_file):
     j = 0
     for car in cars:
         car_name = car['make'] + " " + car['model']
+        print("-"*25)
         print(f"Recherche d'image pour {car_name}...")
 
-        image_url = get_car_image_url(driver, car['make'], car['model'])
-        if image_url:
-            car['urlimage'] = image_url
-            i+=1
-            print(f"Image trouvée pour {car_name} - {i}/{size_cars}\n")
+        if car['urlimage'] == None:
+            image_url = get_car_image_url(driver, car['make'], car['model'])
+            if image_url:
+                car['urlimage'] = image_url
+                i+=1
+                print(f"Image trouvée pour {car_name} - {i}/{size_cars}")
+                with open(json_file, "w") as f:
+                    json.dump(cars, f, indent=4)
+                print(f"Mise à jour de l'url pour {car_name}.\n")
+            else:
+                j+=1
+                print(f"Aucune image trouvée pour {car_name} - {j}/{size_cars} image perdu\n")
         else:
-            j+=1
-            print(f"Aucune image trouvée pour {car_name} - {j}/{size_cars} image perdu\n")
-
+            print(f"Image URL déjà existante")
     driver.quit()
 
     # Sauvegarder les mises à jour dans le fichier JSON
@@ -158,4 +164,4 @@ def update_json_cars_data(json_file):
     print("Base de données mise à jour.")
 
 if __name__ == "__main__":
-    update_json_cars_data("vehicles-model.json")
+    update_json_cars_data("vizucar-bdd.json")
