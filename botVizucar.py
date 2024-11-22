@@ -7,6 +7,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
+from PIL import Image
+import requests
+from io import BytesIO
 
 def configure_driver():
     """
@@ -21,6 +24,15 @@ def configure_driver():
     options.add_argument("--no-sandbox")
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     return driver
+
+def image_has_good_resolution(image_url):
+    response = requests.get(image_url)
+    if response.status_code == 200:
+        img = Image.open(BytesIO(response.content))
+        width, height = img.size
+        if width >= 1280 and height >= 720:
+            return True
+    return False
 
 def get_car_image_url(driver, car_make, car_model):
     """
@@ -39,7 +51,7 @@ def get_car_image_url(driver, car_make, car_model):
 
     try:
         # Chargement de la page
-        time.sleep(0.25)
+        time.sleep(2)
 
         # Récupération de la barre de recherche Google image
         search_box = driver.find_element(By.ID, "APjFqb")
@@ -101,22 +113,39 @@ def get_car_image_url(driver, car_make, car_model):
 
         # Insertion du nom de la voiture dans la barre de recherche
         search_box.click()
-        search_box.send_keys(car_model + car_make)
+        search_box.send_keys(car_model + " " + car_make)
         search_box.send_keys(Keys.RETURN)
 
         # Chargement des images
         time.sleep(1)
 
-        # Récupération de l'url de la première image
-        image_elements = driver.find_elements(By.TAG_NAME, 'img')
-        for img in image_elements:
-            alt_text = img.get_attribute('alt')
-            if alt_text and car_make.lower() in alt_text.lower():
-                image_url = img.get_attribute('src')
-                if image_url:
-                    return image_url
-                else:
-                    print("URL d'image non disponible.")
+        # Récupération des sites qui contiennent des images de la voiture
+        elements_a = driver.find_elements(By.XPATH, f'//a[contains(@href, "{car_make.lower()}")]')
+        for a in elements_a:
+            try:
+                a_href = a.get_attribute('href')
+            except Exception as e:
+                a_href = None
+            if a_href and "google" not in a_href.lower():
+
+                    driver.get(a_href)
+
+                    images = driver.find_elements(By.TAG_NAME, 'img')
+                    for img in images:
+                        try:
+                            image_url = img.get_attribute('src')
+                            image_alt = img.get_attribute('alt')
+                        except Exception as e:
+                            image_url = None
+                            image_alt = None
+                        
+                        if image_url and image_alt:
+                            if car_make.lower() in image_alt.lower() or car_model.lower() in image_alt.lower():
+                                if image_has_good_resolution(image_url):
+                                    return image_url
+                        
+                            
+        print("URL d'image non disponible.")
         return None
     except Exception as e:
         print(f"Erreur lors de la récupération de l'image pour {car_make} {car_model}: {e}")
@@ -155,6 +184,7 @@ def update_json_cars_data(json_file):
                 j+=1
                 print(f"Aucune image trouvée pour {car_name} - {j}/{size_cars} image perdu\n")
         else:
+            i+=1
             print(f"Image URL déjà existante")
     driver.quit()
 
