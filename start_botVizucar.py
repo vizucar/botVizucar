@@ -73,7 +73,7 @@ def get_car_image_url(driver, car_make, car_model, car_year):
 
         for result in driver.find_elements(By.CSS_SELECTOR, '.js-images-link')[0:0+10]:
             imageURL = result.get_attribute('data-id')
-            if imageURL and car_make.lower() in imageURL and car_model.lower() in imageURL and str(car_year) in imageURL:
+            if imageURL and (car_make.lower() in imageURL or car_model.lower() in imageURL or str(car_year) in imageURL):
                 if image_has_good_resolution(imageURL):
                     return imageURL
         return None
@@ -104,25 +104,25 @@ def search_images_cars(json_file):
     for i, car in enumerate(cars):
         car_name = f"{car['make']} {car['model']} {car['year']}"
         print("\n+" + ("-" * 58) + "+")
-        print(f"Recherche d'image pour : {car_name}".center(60))
+        print(f"Recherche d'image pour : {car_name} ({i + 1}/{size_cars})".center(60))
 
         if not car['image_url']:
-            print(f"[INFO] Recherche en cours ({i + 1}/{size_cars})...")
+            print(f"[INFO] Recherche en cours...")
             image_url = get_car_image_url(driver, car['make'], car['model'], car['year'])
-            image_size = get_image_size(image_url)
             
             if image_url:
+                image_size = get_image_size(image_url)
                 car['image_url'] = image_url
                 car['image_size'] = image_size
                 find+=1
-                print(Fore.GREEN + f"[SUCCESS] Image trouvée pour {car_name} ({find}/{size_cars})")
+                print(Fore.GREEN + f"[SUCCESS] Image trouvée pour {car_name}, ({find}/{size_cars}) trouvées")
                 print(Fore.WHITE + f"[INFO] Dimensions : {image_size}")
                 with open(json_file, "w") as f:
                     json.dump(cars, f, indent=4)
-                print(Fore.GREEN + f"[UPDATE] Image mise à jour avec succès.\n")
+                print(Fore.GREEN + f"[UPDATE] Image mise à jour avec succès.")
             else:
                 lose+=1
-                print(Fore.RED + f"[WARNING] Aucune image trouvée pour {car_name} ({lose}/{size_cars}).\n")
+                print(Fore.RED + f"[WARNING] Aucune image trouvée pour {car_name}, ({lose}/{size_cars}) perdus.")
         else:
             find+=1
             print(Fore.YELLOW + f"[SKIP] Image déjà existante pour {car_name}.")
