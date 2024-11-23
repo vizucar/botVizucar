@@ -8,6 +8,9 @@ from selenium.webdriver.chrome.options import Options
 from PIL import Image
 import requests
 from io import BytesIO
+import pyfiglet
+from colorama import Fore, Style, init
+init(autoreset=True)
 
 def configure_driver():
     """
@@ -79,7 +82,7 @@ def get_car_image_url(driver, car_make, car_model, car_year):
         print(f"Erreur lors de la récupération de l'image pour {car_make} {car_model}: {e}")
         return None
 
-def update_json_cars_data(json_file):
+def search_images_cars(json_file):
     """
     Met à jour le fichier JSON contenant la base de données des voitures avec les URLs des images.
     
@@ -92,31 +95,46 @@ def update_json_cars_data(json_file):
     driver = configure_driver()
 
     size_cars = len(cars)
+    botVizucar = pyfiglet.figlet_format("botVizucar",font="slant")
+
+    print(Fore.RED + Style.BRIGHT + botVizucar.center(60))
+
+    lose = 0
+    find = 0
     for i, car in enumerate(cars):
         car_name = f"{car['make']} {car['model']} {car['year']}"
-        print("-" * 25)
-        print(f"Recherche d'image pour {car_name}...")
+        print("\n+" + ("-" * 58) + "+")
+        print(f"Recherche d'image pour : {car_name}".center(60))
 
         if not car['image_url']:
+            print(f"[INFO] Recherche en cours ({i + 1}/{size_cars})...")
             image_url = get_car_image_url(driver, car['make'], car['model'], car['year'])
             image_size = get_image_size(image_url)
+            
             if image_url:
                 car['image_url'] = image_url
                 car['image_size'] = image_size
-                print(f"Image trouvée pour {car_name} ({i+1}/{size_cars})")
-                print(f"Dimensions de l'image : {image_size}")
+                find+=1
+                print(Fore.GREEN + f"[SUCCESS] Image trouvée pour {car_name} ({find}/{size_cars})")
+                print(Fore.WHITE + f"[INFO] Dimensions : {image_size}")
                 with open(json_file, "w") as f:
                     json.dump(cars, f, indent=4)
-                print(f"URL mise à jour pour {car_name}.\n")
+                print(Fore.GREEN + f"[UPDATE] Image mise à jour avec succès.\n")
             else:
-                print(f"Aucune image trouvée pour {car_name}.\n")
+                lose+=1
+                print(Fore.RED + f"[WARNING] Aucune image trouvée pour {car_name} ({lose}/{size_cars}).\n")
         else:
-            print(f"Image déjà existante pour {car_name}.\n")
+            find+=1
+            print(Fore.YELLOW + f"[SKIP] Image déjà existante pour {car_name}.")
+        print("+" + ("-" * 58) + "+\n")
+
+    print("=" * 60)
+    print(Style.BRIGHT + " Mise à jour terminée ! ".center(60))
+    print("=" * 60)
 
     driver.quit()
     with open(json_file, "w") as f:
         json.dump(cars, f, indent=4)
-    print("Base de données mise à jour.")
 
 if __name__ == "__main__":
-    update_json_cars_data("vizucar-bdd.json")
+    search_images_cars("vizucar-bdd.json")
