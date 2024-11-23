@@ -2,11 +2,9 @@ import json
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
 from PIL import Image
 import requests
 from io import BytesIO
@@ -25,16 +23,29 @@ def configure_driver():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     return driver
 
-def image_has_good_resolution(image_url):
-    response = requests.get(image_url)
-    if response.status_code == 200:
-        img = Image.open(BytesIO(response.content))
-        width, height = img.size
-        if width >= 1280 and height >= 720:
-            return True
-    return False
+def get_image_size(image_url):
+    response = requests.get(image_url, stream=True, timeout=10)
+    if response.status_code != 200:
+        print(f"Erreur de téléchargement : {response.status_code}")
+        return False
+    img = Image.open(BytesIO(response.content))
+    width, height = img.size
+    return f"{width}x{height}"
 
-def get_car_image_url(driver, car_make, car_model):
+
+def image_has_good_resolution(image_url):
+    # Télécharger l'image depuis l'URL
+    response = requests.get(image_url, stream=True, timeout=10)
+    if response.status_code != 200:
+        print(f"Erreur de téléchargement : {response.status_code}")
+        return False
+    img = Image.open(BytesIO(response.content))
+        
+    # Vérifier les dimensions de l'image
+    width, height = img.size
+    return width >= 1280 and height >= 720
+
+def get_car_image_url(driver, car_make, car_model, car_year):
     """
     Recherche et récupère l'URL de l'image d'une voiture sur Google Images.
     
@@ -42,115 +53,32 @@ def get_car_image_url(driver, car_make, car_model):
         driver (webdriver.Chrome): Le driver Selenium.
         car_make (str): La marque de la voiture.
         car_model (str): Le modèle de la voiture.
+        car_year (int): L'année de la voiture.
     
     Returns:
         str: URL de l'image de la voiture si trouvée, sinon None.
     """
-    search_url = "https://www.google.com/imghp"
+    search_url = "https://duckduckgo.com/?q=" + car_make + car_model + str(car_year) + "&kl=us-en&ia=web"
     driver.get(search_url)
 
     try:
-        # Chargement de la page
-        time.sleep(2)
-
-        # Récupération de la barre de recherche Google image
-        search_box = driver.find_element(By.ID, "APjFqb")
-
-        # Suppression de tous les éléments qui empêche de cliquer sur la barre de recherche
-        try:
-            overlay = driver.find_element(By.CSS_SELECTOR, "ul.dbXO9")
-            driver.execute_script("arguments[0].style.display = 'none';", overlay)
-        except Exception as e:
-            print("Aucun overlay à supprimer")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "yS1nld")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquante trouvé")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "AG96lb")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquante trouvé")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "I90TVb")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquante trouvé")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "IczZ4b")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquante trouvé")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "QS5gu")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquante trouvé")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "GzLjMd")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquante trouvé")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "jw8mI")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquant trouvé")
-
-        try:
-            blocking_div = driver.find_element(By.CLASS_NAME, "vUd4jb")
-            driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
-        except Exception as e:
-            print("Aucun div bloquante trouvé")
-
-        # Insertion du nom de la voiture dans la barre de recherche
-        search_box.click()
-        search_box.send_keys(car_model + " " + car_make)
-        search_box.send_keys(Keys.RETURN)
-
         # Chargement des images
         time.sleep(1)
 
-        # Récupération des sites qui contiennent des images de la voiture
-        elements_a = driver.find_elements(By.XPATH, f'//a[contains(@href, "{car_make.lower()}")]')
-        for a in elements_a:
-            try:
-                a_href = a.get_attribute('href')
-            except Exception as e:
-                a_href = None
-            if a_href and "google" not in a_href.lower():
+        ba = driver.find_element(By.XPATH, "//a[text()='Images']")
+        ba.click()
 
-                    driver.get(a_href)
-
-                    images = driver.find_elements(By.TAG_NAME, 'img')
-                    for img in images:
-                        try:
-                            image_url = img.get_attribute('src')
-                            image_alt = img.get_attribute('alt')
-                        except Exception as e:
-                            image_url = None
-                            image_alt = None
-                        
-                        if image_url and image_alt:
-                            if car_make.lower() in image_alt.lower() or car_model.lower() in image_alt.lower():
-                                if image_has_good_resolution(image_url):
-                                    return image_url
-                        
-                            
-        print("URL d'image non disponible.")
+        for result in driver.find_elements(By.CSS_SELECTOR, '.js-images-link')[0:0+10]:
+            imageURL = result.get_attribute('data-id')
+            if imageURL and car_make.lower() in imageURL and car_model.lower() in imageURL and str(car_year) in imageURL:
+                if image_has_good_resolution(imageURL):
+                    return imageURL
         return None
+
     except Exception as e:
         print(f"Erreur lors de la récupération de l'image pour {car_make} {car_model}: {e}")
         return None
-    
+
 def update_json_cars_data(json_file):
     """
     Met à jour le fichier JSON contenant la base de données des voitures avec les URLs des images.
@@ -164,31 +92,28 @@ def update_json_cars_data(json_file):
     driver = configure_driver()
 
     size_cars = len(cars)
-    i = 0
-    j = 0
-    for car in cars:
-        car_name = car['make'] + " " + car['model']
-        print("-"*25)
+    for i, car in enumerate(cars):
+        car_name = f"{car['make']} {car['model']} {car['year']}"
+        print("-" * 25)
         print(f"Recherche d'image pour {car_name}...")
 
-        if car['urlimage'] == None:
-            image_url = get_car_image_url(driver, car['make'], car['model'])
+        if not car['image_url']:
+            image_url = get_car_image_url(driver, car['make'], car['model'], car['year'])
+            image_size = get_image_size(image_url)
             if image_url:
-                car['urlimage'] = image_url
-                i+=1
-                print(f"Image trouvée pour {car_name} - {i}/{size_cars}")
+                car['image_url'] = image_url
+                car['image_size'] = image_size
+                print(f"Image trouvée pour {car_name} ({i+1}/{size_cars})")
+                print(f"Dimensions de l'image : {image_size}")
                 with open(json_file, "w") as f:
                     json.dump(cars, f, indent=4)
-                print(f"Mise à jour de l'url pour {car_name}.\n")
+                print(f"URL mise à jour pour {car_name}.\n")
             else:
-                j+=1
-                print(f"Aucune image trouvée pour {car_name} - {j}/{size_cars} image perdu\n")
+                print(f"Aucune image trouvée pour {car_name}.\n")
         else:
-            i+=1
-            print(f"Image URL déjà existante")
-    driver.quit()
+            print(f"Image déjà existante pour {car_name}.\n")
 
-    # Sauvegarder les mises à jour dans le fichier JSON
+    driver.quit()
     with open(json_file, "w") as f:
         json.dump(cars, f, indent=4)
     print("Base de données mise à jour.")
