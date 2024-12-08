@@ -39,6 +39,13 @@ def closest_color(requested_colour):
         min_colours[(rd + gd + bd)] = name
     return min_colours[min(min_colours.keys())]
 
+def is_valid_color(rgb, luminance_threshold=(50, 200)):
+    """
+    Vérifie si une couleur est ni trop claire ni trop sombre.
+    """
+    luminance = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]  # Formule de luminance
+    return luminance_threshold[0] <= luminance <= luminance_threshold[1]
+
 def get_car_color(image_url):
     try:
         # Télécharger l'image
@@ -47,18 +54,31 @@ def get_car_color(image_url):
             print(f"Erreur de téléchargement : {response.status_code}")
             return None
         img = Image.open(BytesIO(response.content))
-        
+
+        # Focaliser sur une zone centrale (éviter les bordures)
+        width, height = img.size
+        left = width // 4
+        top = height // 4
+        right = 3 * width // 4
+        bottom = 3 * height // 4
+        img = img.crop((left, top, right, bottom))
+
         # Redimensionner pour accélérer l'analyse
-        img = img.resize((50, 50))  # Réduire la taille pour simplifier l'analyse
+        img = img.resize((50, 50))
         pixels = img.getdata()
-        
+
+        # Filtrer les couleurs invalides
+        valid_pixels = [pixel for pixel in pixels if is_valid_color(pixel)]
+        if not valid_pixels:
+            print("[INFO] Aucune couleur valide détectée.")
+            return "Inconnu"
+
         # Compter les couleurs dominantes
-        color_counts = Counter(pixels)
+        color_counts = Counter(valid_pixels)
         most_common_color = color_counts.most_common(1)[0][0]
-        
+
         # Trouver le nom de la couleur la plus proche
-        color_name = closest_color(most_common_color)
-        return color_name
+        return closest_color(most_common_color)
     except Exception as e:
         print(f"Erreur lors de l'analyse de l'image : {e}")
         return None
