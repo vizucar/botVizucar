@@ -213,22 +213,6 @@ def search_images_cars(json_file, start, end=0):
             print("\n+" + ("-" * 58) + "+")
             print(f"Recherche d'image pour : {car_name} ({start+1}/{size_cars})".center(60))
 
-        if not cars[start]['image_url']:
-            print(f"[INFO] Recherche en cours...")
-            image_url = get_car_image_url(driver, cars[start]['make'], cars[start]['model'], cars[start]['year'])
-            
-            if image_url:
-                image_size = get_image_size(image_url)
-                cars[start]['image_url'] = image_url
-                cars[start]['image_size'] = image_size
-                find+=1
-
-                print(Fore.GREEN + f"[SUCCESS] Image trouvée pour {car_name}, ({find}/{size_cars}) trouvées")
-                print(Fore.WHITE + f"[INFO] Dimensions : {image_size}")
-
-                with open(json_file, "w") as f:
-                    json.dump(cars, f, indent=4)
-                print(Fore.GREEN + f"[UPDATE] Image mise à jour avec succès.")
             if not cars[start]['image_url']:
                 print(f"[INFO] Recherche en cours...")
                 image_url = get_car_image_url(driver, cars[start]['make'], cars[start]['model'], cars[start]['year'])
