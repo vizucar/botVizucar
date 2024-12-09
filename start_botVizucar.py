@@ -86,18 +86,41 @@ def get_car_image_url(driver, car_make, car_model, car_year):
     Returns:
         str: URL de l'image de la voiture si trouvée, sinon None.
     """
-    search_url = "https://duckduckgo.com/?q=" + car_make + car_model + str(car_year) + "&kl=us-en&ia=web&ia=images&iax=images"
+    search_url = "https://duckduckgo.com/?q=" + car_make + car_model + str(car_year) + "&kl=fr&ia=web&ia=images&iax=images"
     driver.get(search_url)
 
     try:
         # Chargement des images
         time.sleep(1)
 
-        for result in driver.find_elements(By.CSS_SELECTOR, '.js-images-link')[:20]:
-            imageURL = result.get_attribute('data-id')
+        images = driver.find_elements(By.CSS_SELECTOR, '.tile.tile--img.has-detail')[:10]
+
+        for image in images:
+
+            blocking_classes = [
+                "anomaly-modal__modal", "anomaly-modal__mask"
+            ]
+            for cls in blocking_classes:
+                try:
+                    blocking_divs = driver.find_elements(By.CLASS_NAME, cls)
+                    for blocking_div in blocking_divs:
+                        driver.execute_script("arguments[0].style.display = 'none';", blocking_div)
+                except Exception:
+                    pass
+
+            try:
+                image.click()
+            except Exception as e:
+                pass
+            
+            img = driver.find_element(By.CSS_SELECTOR, '.detail__media__img-highres')
+                
+            imageURL = img.get_attribute('src')
+            print("Image Found : ", imageURL)
             if imageURL and (car_make.lower() in imageURL or car_model.lower() in imageURL or str(car_year) in imageURL):
                 if image_has_good_resolution(imageURL):
                     return imageURL
+
         return None
 
     except Exception as e:
@@ -128,7 +151,7 @@ def search_images_cars(json_file, start, end=0):
     while start <= end:
         car_name = f"{cars[start]['make']} {cars[start]['model']} {cars[start]['year']}"
         print("\n+" + ("-" * 58) + "+")
-        print(f"Recherche d'image pour : {car_name} ({start+1}/{size_cars})".center(60))
+        print(f"Recherche d'image pour : {car_name} ({start + 1}/{size_cars})".center(60))
 
         if not cars[start]['image_url']:
             print(f"[INFO] Recherche en cours...")
@@ -139,8 +162,10 @@ def search_images_cars(json_file, start, end=0):
                 cars[start]['image_url'] = image_url
                 cars[start]['image_size'] = image_size
                 find+=1
+
                 print(Fore.GREEN + f"[SUCCESS] Image trouvée pour {car_name}, ({find}/{size_cars}) trouvées")
                 print(Fore.WHITE + f"[INFO] Dimensions : {image_size}")
+
                 with open(json_file, "w") as f:
                     json.dump(cars, f, indent=4)
                 print(Fore.GREEN + f"[UPDATE] Image mise à jour avec succès.")
