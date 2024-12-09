@@ -10,9 +10,10 @@ import requests
 from io import BytesIO
 import pyfiglet
 from colorama import Fore, Style, init
-from collections import Counter
 import webcolors
 import os
+from sklearn.cluster import KMeans
+import numpy as np
 init(autoreset=True)
 
 def configure_driver():
@@ -46,6 +47,16 @@ def is_valid_color(rgb, luminance_threshold=(50, 200)):
     luminance = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]  # Formule de luminance
     return luminance_threshold[0] <= luminance <= luminance_threshold[1]
 
+def get_dominant_color(image, n_clusters=5):
+    """
+    Utilise K-Means pour trouver les couleurs dominantes.
+    """
+    img_data = np.array(image)
+    img_data = img_data.reshape((-1, 3))  # Convertir en liste de pixels
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    kmeans.fit(img_data)
+    return kmeans.cluster_centers_
+
 def get_car_color(image_url):
     try:
         # Télécharger l'image
@@ -53,7 +64,7 @@ def get_car_color(image_url):
         if response.status_code != 200:
             print(f"Erreur de téléchargement : {response.status_code}")
             return None
-        img = Image.open(BytesIO(response.content))
+        img = Image.open(BytesIO(response.content)).convert("RGB")
 
         # Focaliser sur une zone centrale (éviter les bordures)
         width, height = img.size
@@ -65,20 +76,20 @@ def get_car_color(image_url):
 
         # Redimensionner pour accélérer l'analyse
         img = img.resize((50, 50))
-        pixels = img.getdata()
 
-        # Filtrer les couleurs invalides
-        valid_pixels = [pixel for pixel in pixels if is_valid_color(pixel)]
-        if not valid_pixels:
+        # Trouver les couleurs dominantes avec K-Means
+        dominant_colors = get_dominant_color(img)
+
+        # Filtrer les couleurs valides
+        valid_colors = [color for color in dominant_colors if is_valid_color(color)]
+        if not valid_colors:
             print("[INFO] Aucune couleur valide détectée.")
             return "Inconnu"
 
-        # Compter les couleurs dominantes
-        color_counts = Counter(valid_pixels)
-        most_common_color = color_counts.most_common(1)[0][0]
+        # Prendre la couleur dominante la plus fréquente
+        dominant_color = tuple(map(int, valid_colors[0]))
+        return closest_color(dominant_color)
 
-        # Trouver le nom de la couleur la plus proche
-        return closest_color(most_common_color)
     except Exception as e:
         print(f"Erreur lors de l'analyse de l'image : {e}")
         return None
